@@ -213,6 +213,29 @@ def topic_filter(articles: list[Article], topics: list[str]) -> list[Article]:
     return [a for a in articles if any(t in f"{a.title} {a.summary}".lower() for t in topics)]
 
 
+def balance(articles: list[Article]) -> list[Article]:
+    """Mix outlets so a cut-off at N articles still includes every source.
+
+    Articles are grouped by outlet (the part of the source name before " - ",
+    e.g. "Wall Street Journal"), sorted newest first within each outlet, then
+    taken one at a time from each outlet in turn (round robin).
+    """
+    oldest = datetime.min.replace(tzinfo=timezone.utc)
+    groups: dict[str, list[Article]] = {}
+    for a in articles:
+        groups.setdefault(a.source.split(" - ")[0], []).append(a)
+    for g in groups.values():
+        g.sort(key=lambda a: a.published or oldest, reverse=True)
+
+    mixed: list[Article] = []
+    queues = list(groups.values())
+    while any(queues):
+        for q in queues:
+            if q:
+                mixed.append(q.pop(0))
+    return mixed
+
+
 # ---------------------------------------------------------------- summary
 
 SYSTEM_PROMPT = """You write a daily news brief from a list of headlines and short summaries.
@@ -347,8 +370,12 @@ def main() -> None:
 
     articles = collect(cfg)
     print(f"Fetched {len(articles)} recent articles")
-    articles = topic_filter(dedupe(articles), cfg.get("topics") or [])
+    articles = balance(topic_filter(dedupe(articles), cfg.get("topics") or []))
     print(f"{len(articles)} articles after dedupe and topic filter")
+    counts: dict[str, int] = {}
+    for a in articles:
+        counts[a.source.split(" - ")[0]] = counts.get(a.source.split(" - ")[0], 0) + 1
+    print("By outlet: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
 
     if not articles:
         sys.exit("No articles found. Check your API keys and network access.")
