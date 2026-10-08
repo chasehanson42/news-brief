@@ -1,0 +1,6 @@
+openai>=1.50
+feedparser>=6.0
+requests>=2.31
+PyYAML>=6.0
+Markdown>=3.5
+python-dotenv>=1.0

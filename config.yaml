@@ -1,0 +1,86 @@
+# Daily news brief configuration.
+# Edit this file to change sources, topics, and the LLM providers.
+
+# Free LLM providers, tried in order. The first one with an API key set that
+# returns a good response is used. All use OpenAI-compatible endpoints, so any
+# other compatible provider can be added the same way.
+llm:
+  providers:
+    # Primary: Google Gemini free tier. Large context, so it can take every article.
+    # Free-tier prompts may be used by Google to improve its products, which is
+    # fine for public headlines but do not send private company data here.
+    - name: gemini
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      model: gemini-3.8-flash         # check aistudio.google.com for current free models
+      api_key_env: GEMINI_API_KEY
+      max_articles: 80
+      max_tokens: 8000                # extra room because Flash models "think" before answering
+
+    # Backup 1: Groq free tier. Fast, but only ~8K tokens per minute,
+    # so it gets fewer articles and shorter summaries.
+    - name: groq
+      base_url: https://api.groq.com/openai/v1
+      model: openai/gpt-oss-120b
+      api_key_env: GROQ_API_KEY
+      max_articles: 30
+      summary_chars: 200
+      max_tokens: 2500
+      extra_body:
+        reasoning_effort: low
+
+    # Backup 2: OpenRouter free models (about 50 free requests per day).
+    - name: openrouter
+      base_url: https://openrouter.ai/api/v1
+      model: openai/gpt-oss-120b:free
+      api_key_env: OPENROUTER_API_KEY
+      max_articles: 60
+      max_tokens: 4000
+
+# Only articles published within this many hours are kept.
+lookback_hours: 24
+
+# Optional keyword filter. Leave the list empty to keep every story.
+# Matching is case-insensitive against the title and summary.
+topics: []
+#  - interest rates
+#  - earnings
+#  - federal reserve
+
+sources:
+  # New York Times Top Stories API (needs NYT_API_KEY, free at developer.nytimes.com)
+  nyt_api:
+    enabled: true
+    sections: [home, business, world, us, technology]
+
+  # Guardian Open Platform (needs GUARDIAN_API_KEY, free developer key).
+  guardian_api:
+    enabled: true
+    sections: [business, world, us-news, technology]
+
+  # Free RSS feeds. Each one only gives a headline and a short summary.
+  rss:
+    - name: Wall Street Journal - Markets
+      url: https://feeds.content.dowjones.io/public/rss/RSSMarketsMain
+    - name: Wall Street Journal - World
+      url: https://feeds.content.dowjones.io/public/rss/RSSWorldNews
+    - name: Wall Street Journal - US Business
+      url: https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness
+    - name: Wall Street Journal - Economy
+      url: https://feeds.content.dowjones.io/public/rss/socialeconomyfeed
+    - name: NPR - Business
+      url: https://feeds.npr.org/1006/rss.xml
+    - name: NPR - News
+      url: https://feeds.npr.org/1001/rss.xml
+    - name: BBC - Business
+      url: https://feeds.bbci.co.uk/news/business/rss.xml
+    - name: BBC - World
+      url: https://feeds.bbci.co.uk/news/world/rss.xml
+    # Used only when NYT_API_KEY is not set:
+    - name: New York Times - Home
+      url: https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+      nyt_fallback: true
+
+# Delivery
+email:
+  enabled: true
+  subject_prefix: "Daily News Brief"
