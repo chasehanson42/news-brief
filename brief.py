@@ -309,11 +309,12 @@ def add_source_list(report: str, articles: list[Article], provider: str) -> str:
 def send_email(subject: str, markdown_body: str) -> None:
     import markdown as md
 
-    host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    port = int(os.getenv("SMTP_PORT", "587"))
+    # "or" defaults also cover secrets that GitHub passes in as empty strings
+    host = os.getenv("SMTP_HOST") or "smtp.gmail.com"
+    port = int(os.getenv("SMTP_PORT") or "587")
     user = os.environ["SMTP_USER"]
-    password = os.environ["SMTP_PASSWORD"]
-    to = os.getenv("EMAIL_TO", user)
+    password = os.environ["SMTP_PASSWORD"].replace(" ", "")  # app passwords are shown with spaces
+    to = os.getenv("EMAIL_TO") or user
 
     msg = MIMEMultipart("alternative")
     msg["Subject"], msg["From"], msg["To"] = subject, user, to
