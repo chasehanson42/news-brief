@@ -2,8 +2,10 @@ name: Daily News Brief
 
 on:
   schedule:
-    # GitHub cron uses UTC. 11:00 UTC = 7:00 AM Eastern (EDT) / 6:00 AM (EST).
-    - cron: "0 11 * * *"
+    # GitHub cron uses UTC. 10:23 UTC = 6:23 AM Eastern (EDT) / 5:23 AM (EST).
+    # Off the top of the hour on purpose: GitHub delays or skips many runs
+    # scheduled at :00 because that is when most workflows start.
+    - cron: "23 10 * * *"
   workflow_dispatch: # lets you run it manually from the Actions tab
 
 jobs:
@@ -12,9 +14,9 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -39,7 +41,7 @@ jobs:
       # Keeps a copy of each report in the run's Artifacts (private to repo collaborators).
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: news-brief-${{ github.run_id }}
           path: reports/*.md
