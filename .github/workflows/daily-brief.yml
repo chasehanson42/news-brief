@@ -1,12 +1,10 @@
 name: Daily News Brief
 
 on:
-  schedule:
-    # GitHub cron uses UTC. 10:23 UTC = 6:23 AM Eastern (EDT) / 5:23 AM (EST).
-    # Off the top of the hour on purpose: GitHub delays or skips many runs
-    # scheduled at :00 because that is when most workflows start.
-    - cron: "23 10 * * *"
-  workflow_dispatch: # lets you run it manually from the Actions tab
+  # Started every morning by an outside timer (cron-job.org) through GitHub's API,
+  # because GitHub's own schedule trigger can run hours late. See README.
+  # Also lets you run it by hand from the Actions tab.
+  workflow_dispatch:
 
 jobs:
   brief:
