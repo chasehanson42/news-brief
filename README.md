@@ -40,9 +40,22 @@ python brief.py             # full run with email
 1. Push this folder to a GitHub repository. A private repo is recommended.
 2. Go to Settings > Secrets and variables > Actions and add each value from `.env.example` as a repository secret.
 3. Open the Actions tab, pick "Daily News Brief", and click "Run workflow" to test it.
-4. After that it runs every day at 11:00 UTC (7 AM Eastern in summer, 6 AM in winter). Change the `cron` line in `.github/workflows/daily-brief.yml` to change the time.
+4. Set up the daily timer below.
 
-Note: GitHub turns off scheduled workflows in a repo after 60 days with no commits. Push a small change now and then, or re-enable the workflow from the Actions tab.
+### 4. Daily timer (cron-job.org)
+
+GitHub's built-in schedule can run hours late, so a free outside timer starts the workflow at an exact time through GitHub's API.
+
+1. Create a GitHub token: Settings > Developer settings > Personal access tokens > Fine-grained tokens > Generate new token. Under Repository access pick "Only select repositories" and choose this repo. Under Repository permissions set Actions to "Read and write". Copy the token.
+2. Sign up at cron-job.org and create a cronjob:
+   - URL: `https://api.github.com/repos/YOUR_USERNAME/news-brief/actions/workflows/daily-brief.yml/dispatches`
+   - Schedule: every day at the time you want, with time zone set to America/New_York (this handles daylight saving automatically)
+   - Advanced > Request method: `POST`
+   - Advanced > Headers: `Accept: application/vnd.github+json`, `Authorization: Bearer YOUR_TOKEN`, `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`
+   - Advanced > Request body: `{"ref":"main"}`
+3. Click "Test run". A `204` response means it worked, and a new run appears in the Actions tab.
+
+The token expires on the date you chose when creating it. Make a new one and update the Authorization header before then.
 
 ## Customizing
 
